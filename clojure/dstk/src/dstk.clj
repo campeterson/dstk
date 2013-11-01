@@ -23,15 +23,28 @@
     (:body
       (api-action :get, (str "/ip2coordinates/" input)))))
 
-;(defn street2coordinates [input]
-  ;(json/read-str
-    ;(:body
-      ;(api-action :get, (str "/street2coordinates/" input)))))
+(defn street2coordinates [input]
+  (json/read-str
+    (:body
+      (api-action :get, (str "/street2coordinates/" input)))))
+
+(defn geocode [input]
+  (json/read-str
+    (:body
+      (api-action :get, (str "/maps/api/geocode/json?address=" input)))))
 
 (defn coordinates2politics [input]
   (json/read-str
     (:body
       (api-action :get, (str "/coordinates2politics/"
+                             (first input)
+                             ","
+                             (last input))))))
+
+(defn coordinates2statistics [input]
+  (json/read-str
+    (:body
+      (api-action :get, (str "/coordinates2statistics/"
                              (first input)
                              ","
                              (last input))))))
