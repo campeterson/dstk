@@ -1,50 +1,57 @@
 (ns dstk
   (:require [clj-http.client :as client])
-  (:require [clojure.data.json :as json]))
-  ;(:use [clojure.contrib.java-utils :only [as-str]]
-        ;[clojure.contrib.str-utils :only [str-join]])
-  ;(:import (java.util URL URLEncoder)))
+  (:require [clojure.data.json :as json])
+  (:require [clojure.java [io :as io]])
+
+  (:use [ring.util.codec :only [url-encode]]))
 
 (defn api-action [method path & [opts]]
   (client/request
     (merge {:method method :url (str "http://www.datasciencetoolkit.org" path)} opts)))
 
-; thanks https://github.com/technomancy/clojure-http-client/blob/master/src/clojure_http/client.clj
-;(defn url-encode
-  ;"Wrapper around java.net.URLEncoder returning a (UTF-8) URL encoded
-  ;representation of argument, either a string or map."
-  ;[arg]
-  ;(if (map? arg)
-    ;(str-join \& (map #(str-join \= (map url-encode %)) arg))
-    ;(URLEncoder/encode (as-str arg) "UTF-8")))
+(defn make-query-string [m]
+  (->> (for [[k v] m]
+         (str (url-encode k) "=" (url-encode v)))
+       (interpose "&")
+       (apply str)))
+
+(defn json-api-call [endpoint arguments data_payload data_payload_type]
+  (if (not (nil? data_payload))
+    (api-action :get, (str endpoint data_payload))))
 
 (defn ip2coordinates [input]
   (json/read-str
     (:body
-      (api-action :get, (str "/ip2coordinates/" input)))))
+      (json-api-call "/ip2coordinates/" {} input "json"))))
 
 (defn street2coordinates [input]
   (json/read-str
     (:body
-      (api-action :get, (str "/street2coordinates/" input)))))
+      (json-api-call "/street2coordinates/" {} input "json"))))
 
 (defn geocode [input]
   (json/read-str
     (:body
-      (api-action :get, (str "/maps/api/geocode/json?address=" input)))))
+      (json-api-call "/maps/api/geocode/json?address=" {} input "json"))))
 
 (defn coordinates2politics [input]
   (json/read-str
     (:body
-      (api-action :get, (str "/coordinates2politics/"
-                             (first input)
-                             ","
-                             (last input))))))
+      (json-api-call "/coordinates2politics/" {} (str
+                                                    (first input)
+                                                    ","
+                                                    (last input)) "json"))))
+
+(defn text2sentences [input]
+  (json/read-str
+    (:body
+      (json-api-call "/text2sentences/" {} input "json"))))
+      ;(api-action :get, (str "/text2sentences/" input)))))
 
 (defn coordinates2statistics [input]
   (json/read-str
     (:body
-      (api-action :get, (str "/coordinates2statistics/"
-                             (first input)
-                             ","
-                             (last input))))))
+      (json-api-call "/coordinates2statistics/" {} (str
+                                                    (first input)
+                                                    ","
+                                                    (last input)) "json"))))
