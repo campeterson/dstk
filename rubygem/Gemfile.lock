@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dstk (0.50.2)
+    dstk (0.51.0)
       httmultiparty
       httparty
       json
