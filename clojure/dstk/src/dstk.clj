@@ -5,53 +5,72 @@
 
   (:use [ring.util.codec :only [url-encode]]))
 
-(defn api-action [method path & [opts]]
-  (client/request
-    (merge {:method method :url (str "http://www.datasciencetoolkit.org" path)} opts)))
+(defn api_url [endpoint]
+  (str "http://www.datasciencetoolkit.org" endpoint))
 
-(defn make-query-string [m]
-  (->> (for [[k v] m]
-         (str (url-encode k) "=" (url-encode v)))
-       (interpose "&")
-       (apply str)))
+;(defn make-query-string [m]
+  ;(->> (for [[k v] m]
+         ;(str (url-encode k) "=" (url-encode v)))
+       ;(interpose "&")
+       ;(apply str)))
 
-(defn json-api-call [endpoint arguments data_payload data_payload_type]
-  (if (not (nil? data_payload))
-    (api-action :get, (str endpoint data_payload))))
+(defn prep-payload [data_payload data_payload_type]
+  (if (= data_payload_type "json")
+    (json/write-str data_payload)
+    data_payload))
 
-(defn ip2coordinates [input]
+(defn to->vector [input]
+  (if (= clojure.lang.PersistentVector (type input))
+    input
+    [input]))
+
+(defn call-dstk-api [endpoint arguments & [data_payload data_payload_type]]
+  (if data_payload
+    (client/post (api_url endpoint)
+      {:body (prep-payload data_payload data_payload_type)})
+    (client/get (api_url endpoint) {:query-params arguments})))
+
+
+; geocode
+(defn geocode [input] ; PASSING!
   (json/read-str
     (:body
-      (json-api-call "/ip2coordinates/" {} input "json"))))
+      (call-dstk-api "/maps/api/geocode/json" {"address" input}))))
 
-(defn street2coordinates [input]
+; ip2coordinates
+(defn ip2coordinates [ips] ; PASSING!
   (json/read-str
     (:body
-      (json-api-call "/street2coordinates/" {} input "json"))))
+      (call-dstk-api "/ip2coordinates" {} (to->vector ips) "json"))))
 
-(defn geocode [input]
+; street2coordinates
+(defn street2coordinates [addresses] ; PASSING!
   (json/read-str
     (:body
-      (json-api-call "/maps/api/geocode/json?address=" {} input "json"))))
+      (call-dstk-api "/street2coordinates" {} (to->vector addresses) "json"))))
 
-(defn coordinates2politics [input]
+; text2sentences
+(defn text2sentences [text] ; PASSING!
   (json/read-str
     (:body
-      (json-api-call "/coordinates2politics/" {} (str
-                                                    (first input)
-                                                    ","
-                                                    (last input)) "json"))))
+      (call-dstk-api "/text2sentences" {} text "json"))))
 
-(defn text2sentences [input]
-  (json/read-str
-    (:body
-      (json-api-call "/text2sentences/" {} input "json"))))
-      ;(api-action :get, (str "/text2sentences/" input)))))
+;coordinages2politics
+; FIXME - failing
+;(defn coordinates2politics [input]
+  ;(json/read-str
+    ;(:body
+      ;(call-dstk-api "/coordinates2politics" {} (str
+                                                    ;(first input)
+                                                    ;","
+                                                    ;(last input)) "json"))))
 
-(defn coordinates2statistics [input]
-  (json/read-str
-    (:body
-      (json-api-call "/coordinates2statistics/" {} (str
-                                                    (first input)
-                                                    ","
-                                                    (last input)) "json"))))
+; coordinates2statistics
+; FIXME - failing
+;(defn coordinates2statistics [input]
+  ;(json/read-str
+    ;(:body
+      ;(call-dstk-api "/coordinates2statistics" {} (str
+                                                    ;(first input)
+                                                    ;","
+                                                    ;(last input)) "json"))))
