@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		5900B07B17839F52009B5EC3 /* mit.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = mit.txt; sourceTree = "<group>"; };
 		591BB17E17309BDF0061C1A7 /* text2sentiment.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = text2sentiment.rb; sourceTree = "<group>"; };
 		591BB181173ACA9C0061C1A7 /* coordinates2statistics.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = coordinates2statistics.rb; sourceTree = "<group>"; };
 		591BB18217417EA90061C1A7 /* text2sentiment */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = text2sentiment; path = python/text2sentiment; sourceTree = "<group>"; };
@@ -63,6 +64,8 @@
 		597D8CF613357A260042C251 /* text2people */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = text2people; path = python/text2people; sourceTree = "<group>"; };
 		597D8E1213367B6F0042C251 /* dstk_server.rb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.ruby; path = dstk_server.rb; sourceTree = "<group>"; };
 		597D8E1313367BA40042C251 /* dstk_config.rb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.ruby; path = dstk_config.rb; sourceTree = "<group>"; };
+		5981333517F89E67002C0DA8 /* twofishes.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = twofishes.conf; sourceTree = "<group>"; };
+		5981340417FA1E90002C0DA8 /* twofishesd.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = twofishesd.sh; sourceTree = "<group>"; };
 		59B8B61516B48B6C00AD55FC /* vagrantsetup.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = vagrantsetup.txt; sourceTree = "<group>"; };
 		59B8B61616B65D4600AD55FC /* ec2setup.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ec2setup.txt; sourceTree = "<group>"; };
 		59C2BE9713AFEE0700759133 /* test_text2places.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = test_text2places.py; sourceTree = "<group>"; };
@@ -77,6 +80,8 @@
 		59F0A2891351062800098746 /* street2coordinates.rb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.ruby; path = street2coordinates.rb; sourceTree = "<group>"; };
 		59F0A29213525B4C00098746 /* test_street2coordinates.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = test_street2coordinates.py; sourceTree = "<group>"; };
 		59F0A293135265BF00098746 /* buildukindexes.sql */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = buildukindexes.sql; sourceTree = "<group>"; };
+		59F85DBE174DD08500DD695F /* loadnames.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = loadnames.sql; sourceTree = "<group>"; };
+		59F85DC0174EF4CF00DD695F /* analyzebabynames.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = analyzebabynames.rb; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -126,6 +131,7 @@
 				5929E11213243ECB00B81D2E /* geodict_lib.rb */,
 				5929E11413243ECB00B81D2E /* gpl.txt */,
 				5929E11513243ECB00B81D2E /* largetestinput.txt */,
+				5900B07B17839F52009B5EC3 /* mit.txt */,
 				5950FA6114E5254100361BF2 /* php */,
 				5929E11613243ECB00B81D2E /* populate_database.rb */,
 				5929E1E813258B3700B81D2E /* public */,
@@ -140,6 +146,8 @@
 				597D8CE2133561460042C251 /* text2people.rb */,
 				591BB17E17309BDF0061C1A7 /* text2sentiment.rb */,
 				596BF3AB1340402600D42EE1 /* text2times.rb */,
+				5981333517F89E67002C0DA8 /* twofishes.conf */,
+				5981340417FA1E90002C0DA8 /* twofishesd.sh */,
 				5929E1F013258C0500B81D2E /* views */,
 			);
 			sourceTree = "<group>";
@@ -258,6 +266,7 @@
 		59D0BE0A17247F02007AAE04 /* dataconversion */ = {
 			isa = PBXGroup;
 			children = (
+				59F85DC0174EF4CF00DD695F /* analyzebabynames.rb */,
 				59D0BE0E1725F99B007AAE04 /* analyzepostcodes.rb */,
 				59D0BE0C172492E1007AAE04 /* createpostcodes.rb */,
 				59D0BE0B17247F32007AAE04 /* simplegeo2postcodes.rb */,
@@ -271,6 +280,7 @@
 			children = (
 				59F0A293135265BF00098746 /* buildukindexes.sql */,
 				5950FA6514E6410900361BF2 /* loadcountyunemployment.sql */,
+				59F85DBE174DD08500DD695F /* loadnames.sql */,
 				59F0A286134E961F00098746 /* loadukpostcodes.sql */,
 			);
 			path = sql;
@@ -281,6 +291,8 @@
 /* Begin PBXProject section */
 		5929E10013243EA700B81D2E /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = 5929E10313243EA700B81D2E /* Build configuration list for PBXProject "dstk" */;
 			compatibilityVersion = "Xcode 2.4";
 			developmentRegion = English;

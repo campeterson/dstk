@@ -70,6 +70,9 @@
     &nbsp;&nbsp;&nbsp;&nbsp;
     %a{:href=>"#coordinates2statistics"} Coordinates to Statistics
     %br
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    %a{:href=>"#twofishes"} TwoFishes Geocoder
+    %br
     %a{:href=>"#setup"} Setting up your own server
     %br
     &nbsp;&nbsp;&nbsp;&nbsp;
@@ -568,24 +571,69 @@
     :markdown
       #### Text to People
       
-      Extracts any sequences of words that look like people's names, and tries to guess their gender from any first names found. This works best on names that are common in English-speaking countries, though it does cover the most popular foreign-language names too. It also looks for some common titles like Mr and Mrs to help it spot possible people. It relies on capitalization of names, so it will only work on more formal texts.
+      Extracts any sequences of words that look like people's names, and tries to guess their gender, likely age, and ethnicity from the statistical properties of any names found. It's largely based on American surveys, and so works best on names that are common in English-speaking countries, though it does cover the most popular foreign-language names too. It also looks for some common titles like Mr and Mrs to help it spot possible people. It relies on capitalization of names, so it will only work on more formal texts.
+      
       There will inevitably be some noise (is "Will Hunting" in "Good Will Hunting" a name?) so you'll need an application where some false positives aren't a problem. For example, you could use this to spot the most popular people in a collection of crawled news pages.
       <hr>
       `curl -d "Tim O'Reilly, Archbishop Huxley" "http://www.datasciencetoolkit.org/text2people"`
       
-      `[{"start_index":0,"gender":"m","end_index":12,"first_name":"Tim","surnames":"O'Reilly",`
-      
-      `"matching_text":"Tim O'Reilly","title":""},`
-      
-      `{"start_index":14,"gender":"u","end_index":31,"first_name":"","surnames":"Huxley",`
-      
-      `"matching_text":"Archbishop Huxley","title":"archbishop"}]`
+      `[{"first_name": "Tim",`
+
+      `   "title": "",`
+
+      `  "surnames": "O'Reilly",`
+
+      `  "likely_age": 53,`
+
+      `  "start_index": 0,`
+    
+      `  "end_index": 12,`
+
+      `  "ethnicity": null,`
+
+      `  "matched_string": "Tim O'Reilly",`
+
+      `  "gender": "m"},`
+
+      `{"first_name": "",`
+
+      `  "title": "archbishop",`
+
+      `  "surnames": "Huxley",`
+
+      `  "likely_age": null,`
+
+      `  "start_index": 14,`
+
+      `  "end_index": 31,`
+
+      `  "ethnicity": { "percentage_of_total": 0.0002,`
+
+      `    "percentage_hispanic": 0.0,`
+
+      `    "percentage_white": 94.81,`
+
+      `    "percentage_black": 0.0,`
+
+      `    "percentage_asian_or_pacific_islander": 0.93, `
+
+      `    "percentage_american_indian_or_alaska_native": 0.0,`
+
+      `    "rank": 38587,`
+
+      `    "percentage_two_or_more": 3.34},`
+    
+      `  "matched_string": "Archbishop Huxley",`
+
+      `  "gender": "u"}]`
       
       <hr>
 
       The text is passed in either as a JSON-encoded array in the remainder of the URL for a GET call, or in the raw body of the request for POST. The usual 8,000 character limit on GET URLs applies, so use POST for larger texts.
 
-      This API uses my Ruby port of Eamon Daly and Jon Orwant's original [GenderFromName Perl module](http://search.cpan.org/~edaly/Text-GenderFromName-0.32/GenderFromName.pm) to classify first names.
+      This API uses my Ruby port of Eamon Daly and Jon Orwant's original [GenderFromName Perl module](http://search.cpan.org/~edaly/Text-GenderFromName-0.32/GenderFromName.pm) to guess the gender of first names. It also uses information from [the US Social Security Administration's analysis of baby names](http://www.ssa.gov/oact/babynames/limits.html) to guess both gender. The likely age guessing uses the baby names data, and [actuarial tables from the NCHS](http://www.cdc.gov/nchs/data/nvsr/nvsr61/nvsr61_03.pdf) to normalize for life expectancy.
+      
+      The ethnicity breakdown of surnames is based on [the US Census's list of all names that occurred 100 or more times in the 2000 survey](http://www.census.gov/genealogy/www/data/2000surnames/index.html).
 
     %a{:name=>"text2times"}
     :markdown
@@ -683,6 +731,37 @@
             #{'.'}
       %br
 
+    %a{:name=>"twofishes"}
+    :markdown
+      #### TwoFishes Geocoder
+      
+      The open-source city-level [TwoFishes geocoder](http://www.twofishes.net/) written by [David Blackman](http://twitter.com/blackmad) at Foursquare is included in this package. It's used as part of the [Google-style geocoder](#googlestylegeocoder) for non-street addresses, but you can access more advanced features through the `/twofishes` endpoint. The full API is documented at [twofishes.net](http://www.twofishes.net), and all methods should work as described, but with `/twofishes` added to the start of the URL. Here's a simple example, demonstrating how the geocoder recognizes native-language cities worldwide and can separate out non-geographic terms:
+
+      `curl "http://www.datasciencetoolkit.org/twofishes?query=pizza+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9"`
+      
+      `{"interpretations":[{"what":"pizza","where":"القاهرة",`
+      
+      `  "feature":{"cc":"EG","geometry":{"center":{"lat":30.06263,"lng":31.24967},`
+      
+      `  "bounds":{"ne":{"lat":30.1480960846,"lng":31.3563537598},`
+      
+      `  "sw":{"lat":29.9635601044,"lng":31.1625480652}}},`
+      
+      `  "name":"Cairo","displayName":"Cairo, EG","woeType":7,`
+      
+      `  "ids":[{"source":"geonameid","id":"360630"}],`
+      
+      `  "names":[{"name":"Cairo","lang":"en","flags":[16,1]},`
+      
+      `  {"name":"Cairo","lang":"en","flags":[16]}],"highlightedName":"<b>القاهرة</b>, EG",`
+      
+      `  "matchedName":"القاهرة, EG","id":"geonameid:360630","attributes":{`
+      
+      `  "adm0cap":1,"scalerank":0,"labelrank":3,"natscale":600,"population":7734614},`
+      
+      `  "longId":"72057594038288566"},"scores":{}}]}`
+
+
     %a{:name=>"setup"}
     :markdown
       ### Setting up your own server
@@ -693,15 +772,44 @@
     :markdown
       The simplest way to create a server is to grab a virtual machine. This whole server is available ready-to-go as either a Vagrant VM or Amazon EC2 Image. 
       
-      For Amazon, find the AMI with the id `ami-7b9df412`. Start a new instance from this image (for example with `ec2-run-instances ami-49dc4820 -t m1.large -z us-east-1d`), wait a couple of minutes for the machine to boot up, and then paste the public DNS name of the instance into your browser. You should see the normal home page of this site. You can test that it's working by pasting text into the main input. You can then just change your code base URL to that DNS name, and start using the API from your own server immediately. If you don't, check to make sure that your security group rules allow you to access port 80.
+      For Amazon, find the AMI for your region from the list below, e.g. `ami-9386d1fa` for US-East-1 ([see here for the details of tracking down an image](https://sites.google.com/site/planetblix/cloud-technologies/amazon-aws)).
+      
+    %table
+      %tr
+        %td= "US East (N. Virginia)"
+        %td= "ami-9386d1fa"
+      %tr
+        %td= "US West (Oregon)"
+        %td= "ami-02be2032"
+      %tr
+        %td= "US West (N. California)"
+        %td= "ami-000a3e45"
+      %tr
+        %td= "EU (Ireland)"
+        %td= "ami-70b95f07"
+      %tr
+        %td= "Asia Pacific (Singapore)"
+        %td= "ami-0a317b58"
+      %tr
+        %td= "Asia Pacific (Tokyo)"
+        %td= "ami-e11886e0"
+      %tr
+        %td= "Asia Pacific (Sydney)"
+        %td= "ami-831b86b9"
+      %tr
+        %td= "South America (São Paulo)"
+        %td= "ami-c15dfadc"
+
+    :markdown
+      Start a new instance from this image (for example with `ec2-run-instances ami-9386d1fa -t m1.large -z us-east-1d`), wait a couple of minutes for the machine to boot up, and then paste the public DNS name of the instance into your browser. You should see the normal home page of this site. You can test that it's working by pasting text into the main input. You can then just change your code base URL to that DNS name, and start using the API from your own server immediately. If you don't, check to make sure that your security group rules allow you to access port 80.
 
     %a{:name=>"vagrant"}
     :markdown
       [Vagrant](http://www.vagrantup.com/) is a free and easy way to run VMs on your local machine. Once you've [set up the base software](http://docs.vagrantup.com/v1/docs/getting-started/index.html), you can run
       
-      `vagrant box add dstk http://static.datasciencetoolkit.org/dstk_0.50.box`
+      `vagrant box add dstk http://where.jetpac.com.s3.amazonaws.com/dstk_0.51.box`
         
-      to download the DSTK image. The VM is almost 20GB, because of the large amount of geographical data included locally, so you'll need a good connection. You may want to try [this BitTorrent](http://static.datasciencetoolkit.org/dstk_0.50.torrent) if the standard HTTP download is too slow. Once you have the image, create a new directory and run
+      to download the DSTK image. The VM is almost 24GB, because of the large amount of geographical data included locally, so you'll need a good connection. You may want to try [this BitTorrent](http://where.jetpac.com.s3.amazonaws.com/dstk_0.51.torrent) if the standard HTTP download is too slow. Once you have the image, create a new directory and run
       
       `vagrant init`
       
@@ -709,4 +817,4 @@
       
       and you should have a local copy of the toolkit accessible at http://localhost:8080. `vagrant ssh` will give you shell access, or the username and password are both 'vagrant' if you need to log in through VirtualBox's GUI.
 
-      If you want to roll your own server from source on an in-house machine, or on another hosting provider, docs/ec2setup.txt in the [github repository](http://github.com/petewarden/dstk) contains instructions on the exact steps I took to create that image starting from a clean Ubuntu 12.04 installation. You can also download [a VMware-compatible .ova image](http://static.datasciencetoolkit.org/dstk_0.50.ova).
+      If you want to roll your own server from source on an in-house machine, or on another hosting provider, docs/ec2setup.txt in the [github repository](http://github.com/petewarden/dstk) contains instructions on the exact steps I took to create that image starting from a clean Ubuntu 12.04 installation. You can also download [a VMware-compatible .ova image](http://static.datasciencetoolkit.org/dstk_0.50.ova). <Add MD5>

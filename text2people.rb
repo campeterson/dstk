@@ -24,8 +24,11 @@ require 'json'
 
 # Some hackiness to include the library script, even if invoked from another directory
 require File.join(File.expand_path(File.dirname(__FILE__)), 'dstk_config')
+require File.join(File.expand_path(File.dirname(__FILE__)), 'geodict_lib')
 
 require 'genderfromname'
+
+CURRENT_YEAR = Time.now.year
 
 $surnames_map = nil
 
@@ -85,7 +88,11 @@ def text2people(text)
   
     title_match = match_title(first_word)
     first_name_match = match_first_name(first_word)
-    
+    $stderr.puts "first_word=#{first_word}"
+    if first_name_match
+      $stderr.puts "first_name_match=#{first_name_match.to_json}"
+    end
+
     if !title_match and !first_name_match
       debug_log('"'+first_word+'" doesn\'t match a first name or title, skipping')
       offset += first_word.length+1
@@ -109,6 +116,18 @@ def text2people(text)
       surnames = remaining_words[0..-1].join(' ')
     end
 
+    if first_name_match
+      likely_age = first_name_match[:age]
+      year_percentages = first_name_match[:year_percentages]
+      year_percentages_start_year = first_name_match[:year_percentages_start_year]
+      male_percentage = first_name_match[:male_percentage]
+    else
+      likely_age = nil
+      year_percentages = nil
+      year_percentages_start_year = nil
+      male_percentage = nil
+    end
+
     ethnicity = get_ethnicity_from_last_name(surnames.split(' ').last)
 
     matched_string = full_match.to_s
@@ -119,13 +138,17 @@ def text2people(text)
 
     result.push({
       :gender => gender,
+      :male_percentage => male_percentage,
       :title => title,
       :first_name => first_name,
       :surnames => surnames,
       :matched_string => matched_string,
       :start_index => start_index,
       :end_index => end_index,
-      :ethnicity => ethnicity
+      :ethnicity => ethnicity,
+      :likely_age => likely_age,
+      :year_percentages => year_percentages,
+      :year_percentages_start_year => year_percentages_start_year
     })
 
   end
@@ -189,59 +212,67 @@ def match_first_name(word)
   if blacklist.has_key?(word)
     return nil
   end
-  
-  info = gender_from_name(word, 1)
-  if !info
-    return nil
-  end
-  
-  { :gender => info[:gender] }  
-end
 
-def load_surnames_map
-  $surnames_map = {}
-  file_name = DSTKConfig::ETHNICITY_OF_SURNAMES_FILE
-  File.foreach(file_name).with_index do |line, line_number|
-    # Skip the header line, assume fixed column positions
-    if line_number == 0 then next end
-    row = CSV.parse_line(line)
-    name = row[0].downcase
-    rank = row[1].to_i
-    percentage_of_total = row[3].to_f / 1000.0
-    percentage_white = row[5].to_f
-    percentage_black = row[6].to_f
-    percentage_asian_or_pacific_islander = row[7].to_f
-    percentage_american_indian_or_alaska_native = row[8].to_f
-    percentage_two_or_more = row[9].to_f
-    percentage_hispanic = row[10].to_f
-    $surnames_map[name] = [
-      rank,
-      percentage_of_total,
-      percentage_white,
-      percentage_black,
-      percentage_asian_or_pacific_islander,
-      percentage_american_indian_or_alaska_native,
-      percentage_two_or_more,
-      percentage_hispanic,
-    ]
+  result = nil
+  heuristic_info = gender_from_name(word, 1)
+  if heuristic_info
+    result = { :gender => heuristic_info[:gender] }
   end
+
+  select = "SELECT * FROM first_names WHERE name='#{PGconn.escape(word.downcase)}';"
+  rows = select_as_hashes(select, DSTKConfig::NAMES_DATABASE)
+  if rows and rows.length > 0
+    row = rows[0]
+    count = row['count'].to_i
+    male_percentage = row['male_percentage'].to_f
+    most_popular_year = row['most_popular_year'].to_i
+    earliest_common_year = row['earliest_common_year'].to_i
+    latest_common_year = row['latest_common_year'].to_i
+    year_percentages_strings = row['year_percentages'].split('_')
+    year_percentages = year_percentages_strings.map do |i| i.to_f end
+    $stderr.puts "row['year_percentages'] = #{row['year_percentages']}"
+    $stderr.puts "year_percentages_strings.length = #{year_percentages_strings.length}"
+    $stderr.puts "year_percentages.length = #{year_percentages.length}"
+    if !result then result = {} end
+    if !result.has_key?(:gender)
+      if male_percentage > 0.5
+        result[:gender] = 'm'
+      else
+        result[:gender] = 'f'
+      end
+    end
+    result[:male_percentage] = male_percentage
+    result[:age] = CURRENT_YEAR - most_popular_year
+    result[:year_percentages] = year_percentages
+    result[:year_percentages_start_year] = 1880
+  end
+
+  result
+
 end
 
 def get_ethnicity_from_last_name(last_name)
-  if !$surnames_map
-    load_surnames_map
-  end
-  if !$surnames_map[last_name.downcase] then return nil end
-  row = $surnames_map[last_name.downcase]
+  select = "SELECT * FROM ethnicity_of_surnames WHERE name='#{PGconn.escape(last_name.upcase)}';"
+  rows = select_as_hashes(select, DSTKConfig::NAMES_DATABASE)
+  if !rows or rows.length < 1 then return nil end
+  row = rows[0]
+  rank = row['rank'].to_i
+  percentage_of_total = row['prop100k'].to_f / 1000.0
+  percentage_white = row['pctwhite'].to_f
+  percentage_black = row['pctblack'].to_f
+  percentage_asian_or_pacific_islander = row['pctapi'].to_f
+  percentage_american_indian_or_alaska_native = row['pctaian'].to_f
+  percentage_two_or_more = row['pct2prace'].to_f
+  percentage_hispanic = row['pcthispanic'].to_f
   {
-    :rank => row[0],
-    :percentage_of_total => row[1],
-    :percentage_white => row[2],
-    :percentage_black => row[3],
-    :percentage_asian_or_pacific_islander => row[4],
-    :percentage_american_indian_or_alaska_native => row[5],
-    :percentage_two_or_more => row[6],
-    :percentage_hispanic => row[7],
+    :rank => rank,
+    :percentage_of_total => percentage_of_total,
+    :percentage_white => percentage_white,
+    :percentage_black => percentage_black,
+    :percentage_asian_or_pacific_islander => percentage_asian_or_pacific_islander,
+    :percentage_american_indian_or_alaska_native => percentage_american_indian_or_alaska_native,
+    :percentage_two_or_more => percentage_two_or_more,
+    :percentage_hispanic => percentage_hispanic,
   }
 end
 
@@ -254,6 +285,7 @@ Tony Blair
 Samuel L Jackson
 David Aceveda
 Henry Martinez
+Simon Johnson
 TEXT
 
   test_text.each_line do |line|

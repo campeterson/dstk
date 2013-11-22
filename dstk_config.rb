@@ -39,6 +39,9 @@ module DSTKConfig
   # The name of the database holding geographic statistics
   STATISTICS_DATABASE = 'statistics'
 
+  # The name of the database with information about people's names
+  NAMES_DATABASE = 'names'
+
   # The maximum number of words in any name
   WORD_MAX = 3
 
@@ -52,7 +55,7 @@ module DSTKConfig
   IP_MAPPING_DATABASE = '../dstkdata/GeoLiteCity.dat'
   
   # The version of the API this code implements
-  API_VERSION = 50
+  API_VERSION = 51
   
   # The home of the Boilerplate framework
   BOILERPIPE_FOLDER = '../boilerpipe/boilerpipe-core/'

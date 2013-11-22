@@ -20,6 +20,8 @@
 
 require 'rubygems'
 
+require 'json'
+
 # A horrible hack to work around my problems getting the Geocoder to install as a gem
 $LOAD_PATH.unshift '../geocoder/lib'
 require 'geocoder/us/database'
@@ -37,7 +39,7 @@ $geocoder_db = nil
 S2C_WHITESPACE = '(([ \t.,;]+)|^|$)'
 
 def s2c_debug_log(message)
-  printf(STDERR, "%s\n" % message)
+#  printf(STDERR, "%s\n" % message)
 end
 
 # Takes an array of postal addresses as input, and looks up their locations using
@@ -466,7 +468,12 @@ end
 
 # Does the actual conversion of the US address string into coordinates
 def geocode_us_address(address)
-  locations = $geocoder_db.geocode(address, true)
+
+  country_names = '(U\.?S\.?A?\.?|United States|America)'
+  country_names_suffix_re = Regexp.new(S2C_WHITESPACE+country_names+S2C_WHITESPACE+'?$', Regexp::IGNORECASE)
+  countryless_address = address.gsub(country_names_suffix_re, '')
+
+  locations = $geocoder_db.geocode(countryless_address, true)
   if locations and locations.length>0
     location = locations[0]
     if location[:number] and location[:street]
@@ -868,4 +875,22 @@ def canonicalize_street_string(street_string)
   end
 
   output
+end
+
+if __FILE__ == $0
+  test_text = <<-TEXT
+2543 Graystone Place, Simi Valley, CA 93065
+11 Meadow Lane, Over, Cambridge CB24 5NF
+400 Duboce Ave, San Francisco, CA 94117
+TEXT
+
+  test_text.each_line do |line|
+    output = street2coordinates(line)
+    puts line
+    if output
+      puts JSON.pretty_generate(output)
+    end
+    puts '************'
+  end
+
 end
