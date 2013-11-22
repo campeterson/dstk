@@ -7,7 +7,6 @@ require 'rubygems' if RUBY_VERSION < '1.9'
 require 'json'
 require 'httparty'
 require 'httmultiparty'
-require 'debugger'
 
 module DSTK
   class DSTK
@@ -102,7 +101,7 @@ module DSTK
     end
 
     def file2text(inputfile)
-      dstk_api_call('/text2places', {}, {:inputfile => inputfile}, 'file')
+      dstk_api_call('/file2text', {}, {:inputfile => inputfile}, 'file')
     end
 
     def text2sentences(text)
@@ -138,6 +137,10 @@ module DSTK
       end
 
       dstk_api_call('/coordinates2statistics', arguments, coordinates, 'json')
+    end
+
+    def twofishes(text)
+      dstk_api_call('/twofishes', { 'query' => text })
     end
 
   end
